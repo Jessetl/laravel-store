@@ -135,7 +135,7 @@
                         "header": [],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Laptop\",\n    \"currency_id\": 1,\n    \"price\": 1200,\n    \"manufacturing_cost\": 800,\n    \"tax_cost\": 192\n}",
+                            "raw": "{\n    \"name\": \"Laptop\",\n    \"description\": \"Laptop de 14 pulgadas\",\n    \"currency_id\": 1,\n    \"price\": 1200,\n    \"manufacturing_cost\": 800,\n    \"tax_cost\": 192\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

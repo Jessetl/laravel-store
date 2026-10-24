@@ -10,7 +10,6 @@ use Illuminate\Http\Response;
 use App\Models\Product;
 use App\Services\ProductService;
 
-use App\Http\Requests\CreateProduct;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;

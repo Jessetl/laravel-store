@@ -68,11 +68,15 @@ class ProductControllerTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $id, 'name' => 'Laptop']);
     }
 
-    public function test_store_allows_missing_description(): void
+    public function test_store_requires_description(): void
     {
         $this->signIn();
 
-        $this->postJson('/api/v1/products', $this->payload(['description' => null]))->assertCreated();
+        $this->postJson('/api/v1/products', $this->payload(['description' => null]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('description');
+
+        $this->assertDatabaseCount('products', 0);
     }
 
     public function test_store_requires_fields(): void
@@ -81,7 +85,7 @@ class ProductControllerTest extends TestCase
 
         $this->postJson('/api/v1/products', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'price', 'currency_id', 'tax_cost', 'manufacturing_cost']);
+            ->assertJsonValidationErrors(['name', 'description', 'price', 'currency_id', 'tax_cost', 'manufacturing_cost']);
     }
 
     public function test_store_rejects_invalid_amounts_and_currency(): void
@@ -137,6 +141,79 @@ class ProductControllerTest extends TestCase
 
         $this->putJson("/api/v1/products/{$product->id}", ['price' => -5])
             ->assertJsonValidationErrors('price');
+    }
+
+    public function test_update_rejects_more_than_two_decimals_without_rounding(): void
+    {
+        $this->signIn();
+        $product = Product::factory()->create(['price' => '100.00']);
+
+        $this->putJson("/api/v1/products/{$product->id}", [
+            'price' => '1.239',
+            'tax_cost' => '1.239',
+            'manufacturing_cost' => '1.239',
+        ])->assertJsonValidationErrors(['price', 'tax_cost', 'manufacturing_cost']);
+
+        $this->assertSame('100.00', $product->fresh()->price);
+    }
+
+    public function test_update_rejects_amounts_over_column_limit(): void
+    {
+        $this->signIn();
+        $product = Product::factory()->create();
+
+        // decimal(12,2) admite hasta 9999999999.99; más que eso sería un 500 en MySQL
+        $this->putJson("/api/v1/products/{$product->id}", [
+            'price' => '10000000000',
+            'tax_cost' => '10000000000',
+            'manufacturing_cost' => '10000000000',
+        ])->assertJsonValidationErrors(['price', 'tax_cost', 'manufacturing_cost']);
+    }
+
+    public function test_update_accepts_amount_at_column_limit(): void
+    {
+        $this->signIn();
+        $product = Product::factory()->create();
+
+        $this->putJson("/api/v1/products/{$product->id}", ['price' => '9999999999.99'])
+            ->assertOk()
+            ->assertJsonPath('data.price', '9999999999.99');
+    }
+
+    public function test_update_rejects_unknown_currency(): void
+    {
+        $this->signIn();
+        $product = Product::factory()->create();
+
+        $this->putJson("/api/v1/products/{$product->id}", ['currency_id' => 999])
+            ->assertJsonValidationErrors('currency_id');
+    }
+
+    public function test_update_rejects_base_currency_that_already_has_a_price(): void
+    {
+        $this->signIn();
+        $usd = Currency::factory()->create();
+        $eur = Currency::factory()->create();
+        $product = Product::factory()->create(['currency_id' => $usd->id]);
+        $product->prices()->create(['currency_id' => $eur->id, 'price' => '90.00']);
+
+        $this->putJson("/api/v1/products/{$product->id}", ['currency_id' => $eur->id])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.currency_id.0', 'The product already has a registered price in this currency.');
+
+        $this->assertSame($usd->id, $product->fresh()->currency_id);
+    }
+
+    public function test_update_allows_base_currency_without_registered_price(): void
+    {
+        $this->signIn();
+        $product = Product::factory()->create();
+        $product->prices()->create(['currency_id' => Currency::factory()->create()->id, 'price' => '90.00']);
+        $other = Currency::factory()->create();
+
+        $this->putJson("/api/v1/products/{$product->id}", ['currency_id' => $other->id])->assertOk();
+
+        $this->assertSame($other->id, $product->fresh()->currency_id);
     }
 
     public function test_destroy_soft_deletes_product(): void

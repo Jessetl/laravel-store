@@ -24,7 +24,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'price' => ['required', 'decimal:0,2', 'min:0', 'max:9999999999.99'],
             'currency_id' => ['required', 'integer', 'exists:currencies,id'],
             'tax_cost' => ['required', 'decimal:0,2', 'min:0', 'max:9999999999.99'],

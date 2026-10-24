@@ -19,7 +19,7 @@ class ProductPriceController extends Controller
     /**
      * Display a listing of the product prices for a specific product.
      *
-     * Each price includes `converted_price`: the base price of the product converted to that currency using `exchange_rate`.
+     * Each price includes `convertedPrice`: the base price of the product converted to that currency using `exchange_rate`.
      * @param Product $product
      * @return AnonymousResourceCollection
      */

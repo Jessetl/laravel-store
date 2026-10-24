@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id()->comment('Identificador único del producto');
             $table->string('name')->comment('Nombre del producto');
-            $table->text('description')->nullable()->comment('Descripción del producto');
+            $table->text('description')->comment('Descripción del producto');
             $table->decimal('price', 12, 2)->comment('Precio del producto en la divisa base');
             $table->foreignId('currency_id')->constrained('currencies')->restrictOnDelete();
             $table->decimal('tax_cost', 12, 2)->comment('Costo del impuesto aplicado al producto');

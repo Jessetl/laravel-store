@@ -321,7 +321,7 @@ Los productos se devuelven del más reciente al más antiguo.
 | Campo | Regla |
 |---|---|
 | `name` | Obligatorio, texto, máximo 255 caracteres |
-| `description` | Opcional, texto (acepta `null`) |
+| `description` | Obligatorio, texto (el enunciado exige que todo producto tenga descripción) |
 | `price` | Obligatorio, número con hasta 2 decimales, entre 0 y 9,999,999,999.99 |
 | `currency_id` | Obligatorio, ID de una divisa existente (divisa base del producto) |
 | `tax_cost` | Obligatorio, número con hasta 2 decimales, entre 0 y 9,999,999,999.99 |
@@ -335,8 +335,10 @@ La actualización es **parcial**: solo se modifican los campos enviados. Acepta 
 |---|---|
 | `name` | Texto, máximo 255 caracteres |
 | `description` | Texto |
-| `price`, `tax_cost`, `manufacturing_cost` | Numérico, mayor o igual a 0 |
-| `currency_id` | ID de una divisa existente |
+| `price`, `tax_cost`, `manufacturing_cost` | Número con hasta 2 decimales, entre 0 y 9,999,999,999.99 (las mismas reglas que al crear) |
+| `currency_id` | ID de una divisa existente **en la que el producto no tenga un precio registrado** |
+
+Un monto con más de dos decimales se rechaza con 422; nunca se redondea en silencio.
 
 **`POST /products/{id}/prices`**
 
@@ -386,7 +388,7 @@ Los datos siempre vienen dentro de la llave `data`. Los listados paginados agreg
             "baseExchangeRate": "1.000000",
             "exchangeRate": "0.850000",
             "symbol": "€",
-            "converted_price": "1020.00",
+            "convertedPrice": "1020.00",
             "createdAt": "24/10/2026 10:00:00",
             "updatedAt": "24/10/2026 10:00:00"
         }
@@ -401,7 +403,7 @@ Los datos siempre vienen dentro de la llave `data`. Los listados paginados agreg
 | `baseExchangeRate` | Tasa de cambio de la divisa base del producto |
 | `exchangeRate` | Tasa de cambio de la divisa de este precio |
 | `symbol` | Símbolo de la divisa de este precio |
-| `converted_price` | Precio base del producto convertido a esta divisa con las tasas de cambio (ver [Conversión de divisas](#conversión-de-divisas)) |
+| `convertedPrice` | Precio base del producto convertido a esta divisa con las tasas de cambio (ver [Conversión de divisas](#conversión-de-divisas)) |
 
 **Convenciones:**
 
@@ -426,9 +428,10 @@ Ejemplo de error de validación (422):
 
 ```json
 {
-    "message": "The name field is required. (and 4 more errors)",
+    "message": "The name field is required. (and 5 more errors)",
     "errors": {
         "name": ["The name field is required."],
+        "description": ["The description field is required."],
         "price": ["The price field must be at least 0."],
         "currency_id": ["The currency id field is required."],
         "tax_cost": ["The tax cost field is required."],
@@ -467,7 +470,7 @@ precio_convertido = precio_del_producto ÷ tasa_de_la_divisa_del_producto × tas
 - Se usa la extensión **`bcmath`**, que opera con decimales exactos representados como texto. Con números de punto flotante, operaciones como `0.1 + 0.2` dan `0.30000000000000004`, y en dinero eso termina en centavos perdidos.
 - El resultado se redondea a 2 decimales *half-up* (el medio centavo sube).
 - La conversión **se calcula al consultar** y no se guarda. Si cambia la tasa de una divisa, la siguiente consulta ya refleja el valor nuevo.
-- El campo `price` de cada precio es el valor que alguien registró manualmente (por ejemplo, 999.00 EUR como precio comercial). `converted_price` es la referencia matemática. Mostrar ambos permite comparar el precio comercial contra la conversión exacta.
+- El campo `price` de cada precio es el valor que alguien registró manualmente (por ejemplo, 999.00 EUR como precio comercial). `convertedPrice` es la referencia matemática. Mostrar ambos permite comparar el precio comercial contra la conversión exacta.
 
 ## Modelo de datos
 
@@ -477,7 +480,7 @@ precio_convertido = precio_del_producto ÷ tasa_de_la_divisa_del_producto × tas
 ├──────────────────────┤        ├───────────────────────┤        ├──────────────────────┤
 │ id                   │◄───────┤ product_id (FK)       │        │ id                   │
 │ name                 │  1   N │ currency_id (FK)      ├───────►│ name                 │
-│ description (null)   │        │ price                 │  N   1 │ symbol               │
+│ description          │        │ price                 │  N   1 │ symbol               │
 │ price                │        │ UNIQUE(product_id,    │        │ exchange_rate        │
 │ currency_id (FK) ────┼────────┼──► currency_id)       │        └──────────────────────┘
 │ tax_cost             │        └───────────────────────┘                  ▲
@@ -490,7 +493,7 @@ precio_convertido = precio_del_producto ÷ tasa_de_la_divisa_del_producto × tas
 |---|---|---|---|
 | `currencies` | `exchange_rate` | `decimal(18,6)` | Seis decimales para tasas pequeñas |
 | `products` | `price`, `tax_cost`, `manufacturing_cost` | `decimal(12,2)` | Nunca `float`: el dinero exige exactitud |
-| `products` | `description` | `text`, nullable | Es opcional al crear |
+| `products` | `description` | `text`, NOT NULL | Obligatoria, igual que en la validación de la API |
 | `products` | `currency_id` | FK → `currencies` | `restrictOnDelete`: no se puede borrar una divisa en uso |
 | `products` | `deleted_at` | `timestamp`, nullable | Soft delete |
 | `product_prices` | `product_id` | FK → `products` | `cascadeOnDelete` (solo aplica en un borrado físico) |
@@ -629,7 +632,7 @@ Cada operación de escritura tiene su clase de validación. Así el controlador 
 |---|---|---|
 | `LoginRequest` | `POST /auth/login` | Correo con formato válido y contraseña obligatoria |
 | `StoreProductRequest` | `POST /products` | `decimal:0,2` impide más de dos decimales; `max:9999999999.99` coincide con la columna `decimal(12,2)` y evita un error 500 por desbordamiento en MySQL |
-| `UpdateProductRequest` | `PUT /products/{id}` | Reglas con `sometimes`: solo se validan los campos enviados |
+| `UpdateProductRequest` | `PUT /products/{id}` | Reglas con `sometimes`: solo se validan los campos enviados. `Rule::notIn([divisas con precio])` impide cambiar la divisa base a una en la que el producto ya tiene precio registrado |
 | `StoreProductPriceRequest` | `POST /products/{id}/prices` | `Rule::notIn([moneda base])` impide registrar un precio en la divisa base, que ya está en `products.price` |
 
 Solo los campos validados (`$request->validated()`) llegan al modelo, así que cualquier campo extra que mande el cliente se descarta.
@@ -663,7 +666,7 @@ Los *API Resources* definen exactamente qué campos salen en cada respuesta. As�
 | Resource | Representa | Campos |
 |---|---|---|
 | `ProductResource` | Un producto | `id`, `name`, `description`, `symbol` (de su divisa base), `price`, `taxCost`, `manufacturingCost`, `prices` (solo si se cargaron), `createdAt`, `updatedAt` |
-| `ProductPriceResource` | Un precio en otra divisa | `id`, `name` (del producto), `price`, `baseExchangeRate`, `exchangeRate`, `symbol`, `converted_price`, `createdAt`, `updatedAt` |
+| `ProductPriceResource` | Un precio en otra divisa | `id`, `name` (del producto), `price`, `baseExchangeRate`, `exchangeRate`, `symbol`, `convertedPrice`, `createdAt`, `updatedAt` |
 | `CurrencyResource` | Una divisa | `id`, `name`, `symbol`. Preparado para un futuro endpoint de divisas; hoy no lo usa ningún controlador |
 
 `ProductResource` usa `whenLoaded('prices')`: los precios aparecen solo si el controlador los cargó. Por eso `GET /products/{id}` los incluye y el listado no, lo que mantiene el listado liviano.
@@ -680,7 +683,7 @@ Los *API Resources* definen exactamente qué campos salen en cada respuesta. As�
 Detalles que vale la pena explicar:
 
 - **Casts `decimal:2`**: los montos siempre salen como texto con dos decimales (`"1200.00"`), sin importar el motor de base de datos. Sin el cast, SQLite devuelve números y MySQL textos, y el contrato de la API cambiaría según el entorno.
-- **`->chaperone()` en `Product::prices()`**: cada precio recibe una referencia al mismo objeto producto que lo cargó. `ProductPriceResource` necesita el producto para calcular `converted_price`, y sin `chaperone()` haría una consulta extra por cada precio (problema N+1).
+- **`->chaperone()` en `Product::prices()`**: cada precio recibe una referencia al mismo objeto producto que lo cargó. `ProductPriceResource` necesita el producto para calcular `convertedPrice`, y sin `chaperone()` haría una consulta extra por cada precio (problema N+1).
 - **`product_prices` es un modelo propio y no una tabla pivote**: aunque une productos con divisas, tiene identidad (`id`), endpoints propios y un dato de negocio (`price`). Como modelo, crear un duplicado responde 409 de forma explícita; con `belongsToMany`, un `syncWithoutDetaching()` lo habría sobrescrito en silencio.
 
 ### Observers — `app/Observers/ProductObserver.php`
@@ -732,12 +735,12 @@ Los controladores se prueban con **pruebas de feature**: hacen peticiones HTTP r
 | Archivo | Pruebas | Qué verifica |
 |---|---|---|
 | `tests/Feature/AuthControllerTest.php` | 7 | Login correcto con token Bearer, un solo token activo por usuario, contraseña incorrecta (401), validación (422), **bloqueo al sexto intento (429)**, logout revoca el token, logout sin token (401) |
-| `tests/Feature/ProductControllerTest.php` | 12 | 401 en los 5 endpoints sin token, paginación y orden, `per_page` inválido, creación con 201 y `Location`, descripción opcional, campos obligatorios, montos y divisa inválidos, detalle con precios, 404, actualización parcial, monto negativo, **soft delete** |
-| `tests/Feature/ProductPriceControllerTest.php` | 7 | 401 sin token, listado con `converted_price` correcto, 404 con producto inexistente o eliminado, creación, **409 por divisa duplicada**, 422 por divisa base, validación |
+| `tests/Feature/ProductControllerTest.php` | 18 | 401 en los 5 endpoints sin token, paginación y orden, `per_page` inválido, creación con 201 y `Location`, descripción obligatoria (422 sin guardar nada), campos obligatorios, montos y divisa inválidos, detalle con precios, 404, actualización parcial, en la actualización: monto negativo, **más de dos decimales sin redondear**, monto fuera del límite de la columna, monto justo en el límite, divisa inexistente, **divisa base que ya tiene precio (422)** y divisa base libre (200), **soft delete** |
+| `tests/Feature/ProductPriceControllerTest.php` | 7 | 401 sin token, listado con `convertedPrice` correcto, 404 con producto inexistente o eliminado, creación, **409 por divisa duplicada**, 422 por divisa base, validación |
 | `tests/Unit/CurrencyConvertTest.php` | 3 | Conversión con la misma tasa, redondeo del medio centavo hacia arriba (8.585 → 8.59) y conversión entre dos divisas que no son la base |
 | `tests/Feature/ApiDocsTest.php` | 1 | Swagger responde 404 fuera del entorno local |
 
-Total: **30 pruebas**.
+Total: **36 pruebas**.
 
 ## Seguridad
 
@@ -762,7 +765,7 @@ Total: **30 pruebas**.
 
 1. **Divisa base y `exchange_rate`.** Cada producto tiene una divisa base (`currency_id`) y su `price` está expresado en ella. Las tasas se miden contra el dólar estadounidense (= 1), según la convención descrita en [Conversión de divisas](#conversión-de-divisas).
 2. **Precios manuales más conversión calculada.** El enunciado pide "registrar precios en diferentes divisas", así que `product_prices` guarda precios definidos por una persona. La conversión matemática se calcula al consultar y se muestra junto al precio registrado, sin guardarse.
-3. **No se permite un precio en la divisa base.** Ese valor ya está en `products.price`; duplicarlo crearía dos fuentes de verdad que podrían contradecirse (422).
+3. **No se permite un precio en la divisa base.** Ese valor ya está en `products.price`; duplicarlo crearía dos fuentes de verdad que podrían contradecirse (422). La regla se aplica en ambos sentidos: no se puede registrar un precio en la divisa base, y un `PUT` tampoco puede cambiar la divisa base a una en la que el producto ya tiene precio.
 4. **Un precio por divisa (409).** Lo garantiza el índice único de la base de datos. Se responde 409 Conflict y no 422, porque los datos son válidos pero chocan con el estado actual del recurso.
 5. **Soft delete.** Eliminar un producto lo oculta de todas las consultas, pero conserva el registro y su historial de precios para auditoría.
 6. **`PUT` con actualización parcial.** Se aceptan solo los campos que cambian, lo que simplifica a los clientes. `PATCH` funciona igual.

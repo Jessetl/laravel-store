@@ -47,7 +47,7 @@ class ProductPriceControllerTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.price', '9.99')
             ->assertJsonPath('data.0.symbol', '€')
-            ->assertJsonPath('data.0.converted_price', '8.59'); // 10.10 × 0.85 = 8.585 → 8.59
+            ->assertJsonPath('data.0.convertedPrice', '8.59'); // 10.10 × 0.85 = 8.585 → 8.59
     }
 
     public function test_index_returns_404_for_missing_or_deleted_product(): void
@@ -67,7 +67,7 @@ class ProductPriceControllerTest extends TestCase
         $this->postJson($this->url(), ['currency_id' => $this->eur->id, 'price' => '20.00'])
             ->assertCreated()
             ->assertJsonPath('data.price', '20.00')
-            ->assertJsonPath('data.converted_price', '8.59');
+            ->assertJsonPath('data.convertedPrice', '8.59');
 
         $this->assertDatabaseHas('product_prices', [
             'product_id' => $this->product->id,
