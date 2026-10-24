@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProductPrice extends Model
 {
@@ -12,7 +12,7 @@ class ProductPrice extends Model
 
     protected $fillable = [
         'currency_id',
-        'price'
+        'price',
     ];
 
     protected $casts = ['price' => 'decimal:2'];
@@ -32,5 +32,4 @@ class ProductPrice extends Model
     {
         return $this->belongsTo(Currency::class);
     }
-
 }

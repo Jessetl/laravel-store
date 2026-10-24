@@ -3,13 +3,10 @@
 namespace App\Services;
 
 use App\Exceptions\DuplicateProductPrice;
-
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\UniqueConstraintViolationException;
-
 use App\Models\Product;
 use App\Models\ProductPrice;
-
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 final class ProductService
 {
@@ -26,6 +23,7 @@ final class ProductService
     public function update(Product $product, array $data): Product
     {
         $product->update($data);
+
         return $product->load('currency');
     }
 

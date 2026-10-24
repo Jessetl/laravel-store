@@ -1,0 +1,216 @@
+{
+    "_type": "export",
+    "__export_format": 4,
+    "__export_date": "2026-10-24T20:00:00.000Z",
+    "__export_source": "insomnia.desktop.app:v10.0.0",
+    "resources": [
+        {
+            "_id": "wrk_f6b26097f5734f4685d91aab9c31230d",
+            "_type": "workspace",
+            "parentId": null,
+            "name": "Laravel Store",
+            "description": "Colección de la API Laravel Store. El token y el ID del producto se obtienen solos con response tags: access_token sale de la última respuesta de Login y product_id de la última respuesta de Create Product.",
+            "scope": "collection"
+        },
+        {
+            "_id": "env_8c83dc5f44e4375503ea8cf4e5e5615c",
+            "_type": "environment",
+            "parentId": "wrk_f6b26097f5734f4685d91aab9c31230d",
+            "name": "Base Environment",
+            "data": {
+                "base_url": "http://localhost:8000/api",
+                "access_token": "{% response 'body', 'req_9fbf9915dad60e8184e4fe70fc08d3c2', 'b64::JC5hY2Nlc3NfdG9rZW4=::46b', 'no-history', 60 %}",
+                "product_id": "{% response 'body', 'req_d2ac6ce784212673a0140f94c776ec0a', 'b64::JC5kYXRhLmlk::46b', 'no-history', 60 %}"
+            },
+            "dataPropertyOrder": {
+                "&": ["base_url", "access_token", "product_id"]
+            },
+            "color": null,
+            "isPrivate": false,
+            "metaSortKey": 1
+        },
+        {
+            "_id": "req_9fbf9915dad60e8184e4fe70fc08d3c2",
+            "_type": "request",
+            "parentId": "wrk_f6b26097f5734f4685d91aab9c31230d",
+            "name": "Login",
+            "description": "Devuelve el token Bearer que usan las demás peticiones.",
+            "method": "POST",
+            "url": "{{ _.base_url }}/v1/auth/login",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n    \"email\": \"root@example.com\",\n    \"password\": \"Abc.123*\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" },
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": {},
+            "metaSortKey": -1000
+        },
+        {
+            "_id": "fld_54ce5563961db7da916df6bb320b7f06",
+            "_type": "request_group",
+            "parentId": "wrk_f6b26097f5734f4685d91aab9c31230d",
+            "name": "Products",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -900
+        },
+        {
+            "_id": "req_17577326bd1864003baa9ca48dc0de0c",
+            "_type": "request",
+            "parentId": "fld_54ce5563961db7da916df6bb320b7f06",
+            "name": "Get Products",
+            "description": "",
+            "method": "GET",
+            "url": "{{ _.base_url }}/v1/products",
+            "body": {},
+            "parameters": [
+                { "name": "page", "value": "1" },
+                { "name": "per_page", "value": "10" }
+            ],
+            "headers": [
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -800
+        },
+        {
+            "_id": "req_d2ac6ce784212673a0140f94c776ec0a",
+            "_type": "request",
+            "parentId": "fld_54ce5563961db7da916df6bb320b7f06",
+            "name": "Create Product",
+            "description": "El id de la respuesta queda disponible como product_id.",
+            "method": "POST",
+            "url": "{{ _.base_url }}/v1/products",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n    \"name\": \"Laptop\",\n    \"description\": \"Laptop de 14 pulgadas\",\n    \"currency_id\": 1,\n    \"price\": 1200,\n    \"manufacturing_cost\": 800,\n    \"tax_cost\": 192\n}"
+            },
+            "parameters": [],
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" },
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -700
+        },
+        {
+            "_id": "req_325103714bc868368fad6f04fa9de641",
+            "_type": "request",
+            "parentId": "fld_54ce5563961db7da916df6bb320b7f06",
+            "name": "Show Product",
+            "description": "",
+            "method": "GET",
+            "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -600
+        },
+        {
+            "_id": "req_a5ce5d43cbdaa51f476a4f2e0baa1b4e",
+            "_type": "request",
+            "parentId": "fld_54ce5563961db7da916df6bb320b7f06",
+            "name": "Update Product",
+            "description": "",
+            "method": "PUT",
+            "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n    \"name\": \"Laptop Siragon\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" },
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -500
+        },
+        {
+            "_id": "fld_02b0005a17d46d15b30fe5e4e2fb1ea9",
+            "_type": "request_group",
+            "parentId": "fld_54ce5563961db7da916df6bb320b7f06",
+            "name": "Prices",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -400
+        },
+        {
+            "_id": "req_be0227d08835467db6b47d17f2f08ccd",
+            "_type": "request",
+            "parentId": "fld_02b0005a17d46d15b30fe5e4e2fb1ea9",
+            "name": "Create Product Prices",
+            "description": "",
+            "method": "POST",
+            "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}/prices",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n    \"currency_id\": 3,\n    \"price\": 3000\n}"
+            },
+            "parameters": [],
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" },
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -300
+        },
+        {
+            "_id": "req_c5374309b7ab257c24a6b377261e9e38",
+            "_type": "request",
+            "parentId": "fld_02b0005a17d46d15b30fe5e4e2fb1ea9",
+            "name": "Get Product Prices",
+            "description": "",
+            "method": "GET",
+            "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}/prices",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -200
+        },
+        {
+            "_id": "req_3489102e06d13b85e2d32898eebe5b9a",
+            "_type": "request",
+            "parentId": "fld_54ce5563961db7da916df6bb320b7f06",
+            "name": "Delete Product",
+            "description": "",
+            "method": "DELETE",
+            "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": -100
+        },
+        {
+            "_id": "req_c0a1057e252ee43008edfeee2a369cd9",
+            "_type": "request",
+            "parentId": "wrk_f6b26097f5734f4685d91aab9c31230d",
+            "name": "Logout",
+            "description": "Revoca el token actual. Después hay que ejecutar Login de nuevo.",
+            "method": "POST",
+            "url": "{{ _.base_url }}/v1/auth/logout",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                { "name": "Accept", "value": "application/json" }
+            ],
+            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "metaSortKey": 1000
+        }
+    ]
+}

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Currency;
 use Illuminate\Database\Seeder;
 
 class CurrencySeeder extends Seeder
@@ -12,6 +12,6 @@ class CurrencySeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\Currency::factory(5)->create();
+        Currency::factory(5)->create();
     }
 }

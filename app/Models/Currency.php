@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\CurrencyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,7 @@ class Currency extends Model
 {
     protected $table = 'currencies';
 
-    /** @use HasFactory<\Database\Factories\CurrencyFactory> */
+    /** @use HasFactory<CurrencyFactory> */
     use HasFactory;
 
     /**
@@ -52,8 +53,8 @@ class Currency extends Model
     /**
      * Convert an amount from this currency to another currency.
      *
-     * @param string $amount The amount to convert.
-     * @param Currency $to The target currency.
+     * @param  string  $amount  The amount to convert.
+     * @param  Currency  $to  The target currency.
      * @return string The converted amount.
      */
     public function convert(string $amount, Currency $to): string

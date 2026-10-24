@@ -2,42 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\JsonResponse;
-
-use App\Models\Product;
-use Dedoc\Scramble\Attributes\Response;
-use App\Services\ProductService;
 use App\Http\Requests\StoreProductPriceRequest;
 use App\Http\Resources\ProductPriceResource;
+use App\Models\Product;
+use App\Services\ProductService;
+use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductPriceController extends Controller
 {
     public function __construct(private readonly ProductService $products) {}
 
     /**
-     * Display a listing of the product prices for a specific product.
+     * Obtener lista de precios de un producto
      *
-     * Each price includes `convertedPrice`: the base price of the product converted to that currency using `exchange_rate`.
-     * @param Product $product
-     * @return AnonymousResourceCollection
+     * Cada precio incluye `convertedPrice`: el precio base del producto convertido a esa divisa con `exchange_rate`.
      */
     public function index(Product $product): AnonymousResourceCollection
     {
         $product->load(['currency', 'prices.currency']);
+
         return ProductPriceResource::collection($product->prices);
     }
 
     /**
-     * Store a newly created product price for a specific product.
+     * Crear un nuevo precio para un producto
      *
-     * Creates a new price for the product. The base currency of the product is not allowed, and only one price per currency is permitted.
-     * @param StoreProductPriceRequest $request
-     * @param Product $product
-     * @return JsonResponse
+     * No se permite la divisa base del producto ni más de un precio por divisa.
      */
-    #[Response(409, 'The product already has a price in that currency.', type: 'array{message: string}')]
+    #[Response(409, 'El producto ya tiene un precio en esa divisa.', type: 'array{message: string}')]
     public function store(StoreProductPriceRequest $request, Product $product): JsonResponse
     {
         $price = $this->products->addPrice($product, $request->validated());

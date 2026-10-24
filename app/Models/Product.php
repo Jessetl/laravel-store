@@ -2,15 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Observers\ProductObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
-
-use App\Observers\ProductObserver;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy(ProductObserver::class)]
 class Product extends Model
@@ -25,7 +23,7 @@ class Product extends Model
         'price',
         'currency_id',
         'tax_cost',
-        'manufacturing_cost'
+        'manufacturing_cost',
     ];
 
     protected $casts = [

@@ -1,11 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductPriceController;
+use Illuminate\Support\Facades\Route;
 
 // API routes for products and product prices
 Route::prefix('v1')->group(function () {

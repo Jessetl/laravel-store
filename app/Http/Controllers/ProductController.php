@@ -2,34 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
-
-use App\Models\Product;
-use App\Services\ProductService;
-
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
-
+use App\Models\Product;
+use App\Services\ProductService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 class ProductController extends Controller
 {
-    /**
-     * Create a new ProductController instance.
-     *
-     * @param ProductService $products
-     */
     public function __construct(private readonly ProductService $products) {}
 
-    /**
-     * Display a listing of the products.
-     *
-     * @param Request $request
-     * @return AnonymousResourceCollection
-     */
     /**
      * Obtener lista de productos
      *
@@ -42,12 +28,6 @@ class ProductController extends Controller
         return ProductResource::collection($this->products->list($request->integer('per_page', 10)));
     }
 
-    /**
-     * Store a newly created product in storage.
-     *
-     * @param StoreProductRequest $request
-     * @return JsonResponse
-     */
     /**
      * Crear un nuevo producto
      */
@@ -63,26 +43,15 @@ class ProductController extends Controller
     }
 
     /**
-     * Display the specified product.
-     *
-     * @param Product $product
-     * @return ProductResource
-     */
-    /**
      * Obtener un producto por ID
+     *
+     * Incluye sus precios en otras divisas.
      */
     public function show(Product $product): ProductResource
     {
-        return ProductResource::make($product->load(['currency', 'prices']));
+        return ProductResource::make($product->load(['currency', 'prices.currency']));
     }
 
-    /**
-     * Update the specified product in storage.
-     *
-     * @param UpdateProductRequest $request
-     * @param Product $product
-     * @return ProductResource
-     */
     /**
      * Actualizar un producto
      *
@@ -93,12 +62,6 @@ class ProductController extends Controller
         return ProductResource::make($this->products->update($product, $request->validated()));
     }
 
-    /**
-     * Remove the specified product from storage.
-     *
-     * @param Product $product
-     * @return Response
-     */
     /**
      * Eliminar un producto
      *

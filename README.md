@@ -11,7 +11,7 @@ Todas las respuestas son JSON, el acceso está protegido con tokens Bearer (Lara
 3. [Cómo levantar el proyecto](#cómo-levantar-el-proyecto)
 4. [Primeros pasos con la API](#primeros-pasos-con-la-api)
 5. [Documentación interactiva (Swagger)](#documentación-interactiva-swagger)
-6. [Colección de Postman](#colección-de-postman)
+6. [Colecciones de Postman e Insomnia](#colecciones-de-postman-e-insomnia)
 7. [Endpoints](#endpoints)
 8. [Formato de respuestas y errores](#formato-de-respuestas-y-errores)
 9. [Conversión de divisas](#conversión-de-divisas)
@@ -47,13 +47,20 @@ Todas las respuestas son JSON, el acceso está protegido con tokens Bearer (Lara
 
 ## Cómo levantar el proyecto
 
-### 1. Instalar dependencias
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/Jessetl/laravel-store.git
+cd laravel-store
+```
+
+### 2. Instalar dependencias
 
 ```bash
 composer install
 ```
 
-### 2. Crear el archivo de entorno
+### 3. Crear el archivo de entorno
 
 ```bash
 cp .env.example .env
@@ -70,7 +77,7 @@ El `.env.example` ya trae la configuración lista para el MySQL de Docker:
 | `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | `db_store` / `db_store` / `secret` | Credenciales que también usa Docker Compose para crear la base |
 | `SESSION_DRIVER` | `array` | La API no usa sesiones (es *stateless*) |
 
-### 3. Levantar MySQL con Docker
+### 4. Levantar MySQL con Docker
 
 ```bash
 docker compose up -d
@@ -87,7 +94,7 @@ Espera a que MySQL esté listo (columna *STATUS* en `healthy`):
 docker compose ps
 ```
 
-### 4. Crear las tablas y cargar datos iniciales
+### 5. Crear las tablas y cargar datos iniciales
 
 ```bash
 php artisan migrate --seed
@@ -100,7 +107,7 @@ Los *seeders* crean:
   - Contraseña: `Abc.123*`
 - **Cinco divisas** tomadas de una lista fija (dólar estadounidense, euro, libra esterlina, yen japonés y dólar canadiense). Se eligen al azar, así que pueden repetirse; consulta los IDs reales en Adminer, en la tabla `currencies`.
 
-### 5. Iniciar el servidor
+### 6. Iniciar el servidor
 
 ```bash
 php artisan serve
@@ -111,6 +118,8 @@ La API queda disponible en `http://localhost:8000/api/v1`. Para confirmar que la
 ```bash
 curl http://localhost:8000/up
 ```
+
+> **Atajo:** con MySQL ya levantado (paso 4), `composer run setup` ejecuta en un solo comando la instalación de dependencias, la creación del `.env`, la generación de la clave y `migrate --seed`. Después solo falta `php artisan serve`.
 
 ## Primeros pasos con la API
 
@@ -194,21 +203,26 @@ Con `APP_ENV=local` y el servidor encendido:
 
 Por eso la documentación nunca se desfasa del código.
 
-**Exportar la especificación OpenAPI a un archivo:**
+**Especificación sin levantar la API.** El repositorio incluye la especificación exportada en [`docs/openapi.json`](docs/openapi.json) (OpenAPI 3.1), para consultarla o importarla en cualquier herramienta compatible sin ejecutar el proyecto. Si cambias un endpoint, regénerala con:
 
 ```bash
 php artisan scramble:export --path=docs/openapi.json
 ```
 
-Cualquier herramienta compatible con OpenAPI puede importar ese archivo (o la URL `/api/v1/swagger.json`). Para Postman ya existe una colección lista y probada; está descrita en la sección siguiente.
+Para Postman e Insomnia hay colecciones listas para usar, descritas en la sección siguiente.
 
 > La interfaz carga la librería Stoplight Elements desde un CDN, así que necesita conexión a internet.
 
-## Colección de Postman
+## Colecciones de Postman e Insomnia
 
-El archivo [`docs/postman/laravel-store.postman_collection.json`](docs/postman/laravel-store.postman_collection.json) (formato *Collection v2.1*) contiene las 9 peticiones de la API, ordenadas para ejecutarse de principio a fin sin configurar nada a mano.
+En `docs/` hay dos colecciones con las mismas 9 peticiones, en el mismo orden, listas para ejecutarse de principio a fin sin configurar nada a mano:
 
-### Cómo importarla
+| Herramienta | Archivo | Formato |
+|---|---|---|
+| Postman | [`docs/postman/laravel-store.postman_collection.json`](docs/postman/laravel-store.postman_collection.json) | *Collection v2.1* |
+| Insomnia | [`docs/insomnia/laravel-store.insomnia_collection.json`](docs/insomnia/laravel-store.insomnia_collection.json) | Exportación v4 de Insomnia |
+
+### Postman: cómo importarla
 
 1. Abre Postman y pulsa **Import** (arriba a la izquierda).
 2. Arrastra el archivo `docs/postman/laravel-store.postman_collection.json` o selecciónalo desde tu disco.
@@ -216,7 +230,7 @@ El archivo [`docs/postman/laravel-store.postman_collection.json`](docs/postman/l
 
 Si ya tenías importada una versión anterior, Postman pregunta si quieres reemplazarla o importarla como copia. Elige **Replace** para quedarte con la versión del repositorio.
 
-### Variables de la colección
+### Postman: variables de la colección
 
 Se ven y se editan haciendo clic en la colección y abriendo la pestaña **Variables**.
 
@@ -226,7 +240,7 @@ Se ven y se editan haciendo clic en la colección y abriendo la pestaña **Varia
 | `access_token` | vacío | La petición **Login**, automáticamente | Token Bearer que usan todas las demás peticiones |
 | `product_id` | vacío | La petición **Create Product**, automáticamente | ID del producto sobre el que trabajan Show, Update, Prices y Delete |
 
-### Estructura y orden de ejecución
+### Estructura y orden de ejecución (igual en ambas colecciones)
 
 ```
 Laravel Store
@@ -249,7 +263,7 @@ El orden no es casual:
 - **Prices está dentro de Products**, igual que en la API (`/products/{id}/prices`), y **antes de Delete Product**: un producto eliminado responde 404, así que ya no aceptaría precios.
 - **Logout va al final** para cerrar la sesión una vez terminado el recorrido.
 
-### Cómo funciona
+### Postman: cómo funciona
 
 **Autenticación automática.** La pestaña *Scripts → Post-response* de **Login** contiene un script que, si la respuesta es 200, guarda el `access_token` en la variable de la colección. Todas las demás peticiones tienen configurada en *Authorization* la opción *Bearer Token* con el valor `{{access_token}}`, así que no hay que copiar ni pegar el token. Si el token expira (24 horas) o se ejecutó Logout, basta con volver a ejecutar Login.
 
@@ -259,7 +273,7 @@ El orden no es casual:
 
 **Datos de ejemplo.** **Create Product** usa `currency_id: 1` como divisa base y **Create Product Prices** usa `currency_id: 3`. Ambas existen después de `php artisan migrate --seed`, que crea cinco divisas. Si el precio responde 422, revisa que la divisa del precio sea distinta de la divisa base del producto.
 
-### Ejecutar la colección completa
+### Postman: ejecutar la colección completa
 
 **Desde Postman:**
 
@@ -285,9 +299,27 @@ postman collection run docs/postman/laravel-store.postman_collection.json --env-
 
 > Postman CLI puede mostrar al final un aviso pidiendo `postman login`. Ese inicio de sesión solo se usa para publicar los resultados en la nube de Postman; la ejecución local funciona sin él.
 
-### Insomnia
+### Insomnia: cómo importarla
 
-Insomnia también importa este archivo (**Import** → **From File**). Los scripts de Postman pueden no ejecutarse en Insomnia. Si el token no se guarda solo, copia el `access_token` de la respuesta de Login en la variable `access_token`, y haz lo mismo con el `id` de Create Product en `product_id`.
+1. Abre Insomnia y elige **Import**.
+2. Selecciona el archivo `docs/insomnia/laravel-store.insomnia_collection.json`.
+3. Se crea la colección **Laravel Store**, con la misma estructura que la de Postman.
+
+### Insomnia: variables y cómo funciona
+
+Las variables están en el **Base Environment** de la colección (*Manage Environments*).
+
+| Variable | Valor | Para qué sirve |
+|---|---|---|
+| `base_url` | `http://localhost:8000/api` | Dirección base de todas las peticiones. Cámbiala solo si la API corre en otra dirección |
+| `access_token` | *Response tag* que lee `$.access_token` de la última respuesta de **Login** | Token Bearer de las demás peticiones |
+| `product_id` | *Response tag* que lee `$.data.id` de la última respuesta de **Create Product** | Producto sobre el que trabajan Show, Update, Prices y Delete |
+
+En Insomnia no hacen falta scripts. Las variables `access_token` y `product_id` usan *response tags*, una función nativa de Insomnia que toma un valor de la última respuesta de otra petición. Están configuradas en modo **No History**: si la petición de origen nunca se ejecutó, Insomnia la envía sola antes. Por ejemplo, si lo primero que abres es **Show Product**, Insomnia ejecuta antes Login y Create Product.
+
+- Después de **Logout**, el token queda revocado: vuelve a enviar **Login**.
+- Después de **Delete Product**, Show, Update y Prices responden 404 hasta que envíes **Create Product** otra vez.
+- **Create Product** y **Create Product Prices** usan `currency_id` 1 y 3, igual que en Postman.
 
 ## Endpoints
 
@@ -565,7 +597,10 @@ app/
     └── ProductService.php
 bootstrap/app.php                      Rutas, middleware y manejo centralizado de errores
 config/scramble.php                    Configuración de la documentación Swagger
-docs/postman/                          Colección de Postman lista para importar
+docs/
+├── openapi.json                       Especificación OpenAPI (Swagger) exportada
+├── postman/                           Colección de Postman lista para importar
+└── insomnia/                          Colección de Insomnia lista para importar
 database/
 ├── factories/                         Datos falsos para pruebas
 ├── migrations/                        Estructura de las tablas
@@ -618,7 +653,7 @@ Los controladores son **delgados**: solo traducen entre HTTP y la aplicación.
 
 1. Reciben datos ya validados por el Form Request.
 2. Llaman al servicio.
-3. Envuelven el resultado en un Resource y eligen el código de estado: 201 con encabezado `Location` al crear, 204 al eliminar.
+3. Envuelven el resultado en un Resource y eligen el código de estado: 201 al crear (en productos, además, con el encabezado `Location` que apunta al recurso nuevo), 204 al eliminar.
 
 No contienen reglas de negocio ni consultas complejas. El servicio llega por **inyección de dependencias en el constructor** (`private readonly ProductService $products`), y el contenedor de Laravel lo resuelve automáticamente.
 
@@ -710,7 +745,7 @@ Las reglas de integridad se aplican **en la base de datos**, no solo en la aplic
 - **`cascadeOnDelete`** de `product_prices` hacia `products`: si un producto se borra físicamente, sus precios se van con él.
 - **Índice único** `(product_id, currency_id)`: un precio por divisa, garantizado incluso con peticiones simultáneas.
 - **Columnas `decimal`** para todo lo monetario.
-- **Comentarios en cada columna** (`->comment()`), visibles desde Adminer o cualquier cliente SQL.
+- **Comentarios en las columnas de datos** (`->comment()`), visibles desde Adminer o cualquier cliente SQL.
 
 ### Factories y Seeders — `database/factories`, `database/seeders`
 
@@ -720,7 +755,7 @@ Las reglas de integridad se aplican **en la base de datos**, no solo en la aplic
 ### Herramientas incluidas por Laravel
 
 - **`/up`**: ruta de *health check* nativa, útil para balanceadores y orquestadores.
-- **Laravel Pint**: formatea el código. Para revisarlo sin modificar nada: `vendor/bin/pint --test`.
+- **Laravel Pint**: formatea el código; todo el proyecto cumple su estilo. Para revisarlo sin modificar nada: `vendor/bin/pint --test`.
 
 ## Pruebas automatizadas
 
