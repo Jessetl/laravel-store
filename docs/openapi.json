@@ -21,9 +21,7 @@
                 "operationId": "auth.login",
                 "description": "Devuelve un token Bearer. Limitado a 5 intentos por minuto por email + IP.",
                 "summary": "Iniciar sesi\u00f3n",
-                "tags": [
-                    "Auth"
-                ],
+                "tags": ["Auth"],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -47,9 +45,7 @@
                                             "const": "Invalid credentials"
                                         }
                                     },
-                                    "required": [
-                                        "message"
-                                    ]
+                                    "required": ["message"]
                                 }
                             }
                         }
@@ -69,10 +65,7 @@
                                             "const": "Bearer"
                                         }
                                     },
-                                    "required": [
-                                        "access_token",
-                                        "token_type"
-                                    ]
+                                    "required": ["access_token", "token_type"]
                                 }
                             }
                         }
@@ -89,9 +82,7 @@
                 "operationId": "auth.logout",
                 "description": "Revoca el token con el que se hizo la petici\u00f3n.",
                 "summary": "Cerrar sesi\u00f3n",
-                "tags": [
-                    "Auth"
-                ],
+                "tags": ["Auth"],
                 "responses": {
                     "204": {
                         "description": "No content"
@@ -107,9 +98,7 @@
                 "operationId": "products.index",
                 "description": "Paginada, ordenada del m\u00e1s reciente al m\u00e1s antiguo.",
                 "summary": "Obtener lista de productos",
-                "tags": [
-                    "Product"
-                ],
+                "tags": ["Product"],
                 "parameters": [
                     {
                         "name": "per_page",
@@ -139,28 +128,16 @@
                                             "type": "object",
                                             "properties": {
                                                 "first": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                                    "type": ["string", "null"]
                                                 },
                                                 "last": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                                    "type": ["string", "null"]
                                                 },
                                                 "prev": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                                    "type": ["string", "null"]
                                                 },
                                                 "next": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                                    "type": ["string", "null"]
                                                 }
                                             },
                                             "required": [
@@ -178,10 +155,7 @@
                                                     "minimum": 1
                                                 },
                                                 "from": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null"
-                                                    ],
+                                                    "type": ["integer", "null"],
                                                     "minimum": 1
                                                 },
                                                 "last_page": {
@@ -215,10 +189,7 @@
                                                     }
                                                 },
                                                 "path": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ],
+                                                    "type": ["string", "null"],
                                                     "description": "Base path for paginator generated URLs."
                                                 },
                                                 "per_page": {
@@ -227,10 +198,7 @@
                                                     "minimum": 0
                                                 },
                                                 "to": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null"
-                                                    ],
+                                                    "type": ["integer", "null"],
                                                     "description": "Number of the last item in the slice.",
                                                     "minimum": 1
                                                 },
@@ -252,11 +220,7 @@
                                             ]
                                         }
                                     },
-                                    "required": [
-                                        "data",
-                                        "links",
-                                        "meta"
-                                    ]
+                                    "required": ["data", "links", "meta"]
                                 }
                             }
                         }
@@ -272,9 +236,7 @@
             "post": {
                 "operationId": "products.store",
                 "summary": "Crear un nuevo producto",
-                "tags": [
-                    "Product"
-                ],
+                "tags": ["Product"],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -301,10 +263,7 @@
                                             "const": "Product created successfully."
                                         }
                                     },
-                                    "required": [
-                                        "data",
-                                        "message"
-                                    ]
+                                    "required": ["data", "message"]
                                 }
                             }
                         }
@@ -323,9 +282,7 @@
                 "operationId": "products.show",
                 "description": "Incluye sus precios en otras divisas.",
                 "summary": "Obtener un producto por ID",
-                "tags": [
-                    "Product"
-                ],
+                "tags": ["Product"],
                 "parameters": [
                     {
                         "name": "product",
@@ -352,16 +309,12 @@
                                                 },
                                                 {
                                                     "type": "object",
-                                                    "required": [
-                                                        "prices"
-                                                    ]
+                                                    "required": ["prices"]
                                                 }
                                             ]
                                         }
                                     },
-                                    "required": [
-                                        "data"
-                                    ]
+                                    "required": ["data"]
                                 }
                             }
                         }
@@ -378,9 +331,7 @@
                 "operationId": "products.update",
                 "description": "Actualizaci\u00f3n parcial: solo se modifican los campos enviados.",
                 "summary": "Actualizar un producto",
-                "tags": [
-                    "Product"
-                ],
+                "tags": ["Product"],
                 "parameters": [
                     {
                         "name": "product",
@@ -413,9 +364,7 @@
                                             "$ref": "#/components/schemas/ProductResource"
                                         }
                                     },
-                                    "required": [
-                                        "data"
-                                    ]
+                                    "required": ["data"]
                                 }
                             }
                         }
@@ -435,9 +384,7 @@
                 "operationId": "products.destroy",
                 "description": "Soft delete: el producto deja de listarse y su historial de precios se conserva.",
                 "summary": "Eliminar un producto",
-                "tags": [
-                    "Product"
-                ],
+                "tags": ["Product"],
                 "parameters": [
                     {
                         "name": "product",
@@ -467,9 +414,7 @@
                 "operationId": "products.prices.index",
                 "description": "Cada precio incluye `convertedPrice`: el precio base del producto convertido a esa divisa con `exchange_rate`.",
                 "summary": "Obtener lista de precios de un producto",
-                "tags": [
-                    "ProductPrice"
-                ],
+                "tags": ["ProductPrice"],
                 "parameters": [
                     {
                         "name": "product",
@@ -496,9 +441,7 @@
                                             }
                                         }
                                     },
-                                    "required": [
-                                        "data"
-                                    ]
+                                    "required": ["data"]
                                 }
                             }
                         }
@@ -515,9 +458,7 @@
                 "operationId": "products.prices.store",
                 "description": "No se permite la divisa base del producto ni m\u00e1s de un precio por divisa.",
                 "summary": "Crear un nuevo precio para un producto",
-                "tags": [
-                    "ProductPrice"
-                ],
+                "tags": ["ProductPrice"],
                 "parameters": [
                     {
                         "name": "product",
@@ -551,9 +492,7 @@
                                             "$ref": "#/components/schemas/ProductPriceResource"
                                         }
                                     },
-                                    "required": [
-                                        "data"
-                                    ]
+                                    "required": ["data"]
                                 }
                             }
                         }
@@ -578,9 +517,7 @@
                                             "type": "string"
                                         }
                                     },
-                                    "required": [
-                                        "message"
-                                    ]
+                                    "required": ["message"]
                                 }
                             }
                         }
@@ -608,10 +545,7 @@
                         "type": "string"
                     }
                 },
-                "required": [
-                    "email",
-                    "password"
-                ],
+                "required": ["email", "password"],
                 "title": "LoginRequest"
             },
             "ProductPriceResource": {
@@ -639,16 +573,10 @@
                         "type": "string"
                     },
                     "createdAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
+                        "type": ["string", "null"]
                     },
                     "updatedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
+                        "type": ["string", "null"]
                     }
                 },
                 "required": [
@@ -726,10 +654,7 @@
                         "maximum": 9999999999.99
                     }
                 },
-                "required": [
-                    "currency_id",
-                    "price"
-                ],
+                "required": ["currency_id", "price"],
                 "title": "StoreProductPriceRequest"
             },
             "StoreProductRequest": {
@@ -827,10 +752,7 @@
                                     }
                                 }
                             },
-                            "required": [
-                                "message",
-                                "errors"
-                            ]
+                            "required": ["message", "errors"]
                         }
                     }
                 }
@@ -847,9 +769,7 @@
                                     "description": "Error overview."
                                 }
                             },
-                            "required": [
-                                "message"
-                            ]
+                            "required": ["message"]
                         }
                     }
                 }
@@ -866,9 +786,7 @@
                                     "description": "Error overview."
                                 }
                             },
-                            "required": [
-                                "message"
-                            ]
+                            "required": ["message"]
                         }
                     }
                 }

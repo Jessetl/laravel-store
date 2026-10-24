@@ -72,10 +72,12 @@
                 { "name": "page", "value": "1" },
                 { "name": "per_page", "value": "10" }
             ],
-            "headers": [
-                { "name": "Accept", "value": "application/json" }
-            ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "headers": [{ "name": "Accept", "value": "application/json" }],
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -800
         },
         {
@@ -95,7 +97,11 @@
                 { "name": "Content-Type", "value": "application/json" },
                 { "name": "Accept", "value": "application/json" }
             ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -700
         },
         {
@@ -108,10 +114,12 @@
             "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}",
             "body": {},
             "parameters": [],
-            "headers": [
-                { "name": "Accept", "value": "application/json" }
-            ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "headers": [{ "name": "Accept", "value": "application/json" }],
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -600
         },
         {
@@ -131,7 +139,11 @@
                 { "name": "Content-Type", "value": "application/json" },
                 { "name": "Accept", "value": "application/json" }
             ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -500
         },
         {
@@ -161,7 +173,11 @@
                 { "name": "Content-Type", "value": "application/json" },
                 { "name": "Accept", "value": "application/json" }
             ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -300
         },
         {
@@ -174,10 +190,12 @@
             "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}/prices",
             "body": {},
             "parameters": [],
-            "headers": [
-                { "name": "Accept", "value": "application/json" }
-            ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "headers": [{ "name": "Accept", "value": "application/json" }],
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -200
         },
         {
@@ -190,10 +208,12 @@
             "url": "{{ _.base_url }}/v1/products/{{ _.product_id }}",
             "body": {},
             "parameters": [],
-            "headers": [
-                { "name": "Accept", "value": "application/json" }
-            ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "headers": [{ "name": "Accept", "value": "application/json" }],
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": -100
         },
         {
@@ -206,10 +226,12 @@
             "url": "{{ _.base_url }}/v1/auth/logout",
             "body": {},
             "parameters": [],
-            "headers": [
-                { "name": "Accept", "value": "application/json" }
-            ],
-            "authentication": { "type": "bearer", "token": "{{ _.access_token }}", "prefix": "" },
+            "headers": [{ "name": "Accept", "value": "application/json" }],
+            "authentication": {
+                "type": "bearer",
+                "token": "{{ _.access_token }}",
+                "prefix": ""
+            },
             "metaSortKey": 1000
         }
     ]
