@@ -2,9 +2,9 @@
 
 namespace App\Exceptions;
 
-use RuntimeException;
-
-final class DuplicateProductPrice extends RuntimeException
+final class DuplicateProductPrice extends BusinessException
 {
+    protected int $status = 409;
+
     protected $message = 'The product already has a price for the specified currency.';
 }

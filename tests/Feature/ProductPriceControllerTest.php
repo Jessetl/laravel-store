@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\DuplicateProductPrice;
 use App\Models\Currency;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
 use Tests\TestCase;
 
 class ProductPriceControllerTest extends TestCase
@@ -80,9 +82,14 @@ class ProductPriceControllerTest extends TestCase
         $this->signIn();
         $this->product->prices()->create(['currency_id' => $this->eur->id, 'price' => '9.99']);
 
+        Exceptions::fake();
+
         $this->postJson($this->url(), ['currency_id' => $this->eur->id, 'price' => '20.00'])
             ->assertConflict()
             ->assertExactJson(['message' => 'The product already has a price for the specified currency.']);
+
+        // Es una regla de negocio, no un bug: no debe llegar al log de errores
+        Exceptions::assertNotReported(DuplicateProductPrice::class);
     }
 
     public function test_store_rejects_product_base_currency(): void

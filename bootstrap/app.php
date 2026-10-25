@@ -1,6 +1,7 @@
 <?php
 
-use App\Exceptions\DuplicateProductPrice;
+use App\Exceptions\BusinessException;
+use App\Exceptions\ResourceNotFound;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,20 +23,23 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
+        // Se aplica antes de que Laravel lo convierta en NotFoundHttpException,
+        // así un modelo inexistente se responde por el render de BusinessException
+        $exceptions->map(ModelNotFoundException::class, fn (ModelNotFoundException $e) => new ResourceNotFound($e));
+
+        // Solo llegan aquí las URLs que no existen
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
             }
 
             return response()->json([
-                'message' => $e->getPrevious() instanceof ModelNotFoundException ? 'The requested resource was not found.'
-                    : 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.',
+                'message' => 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.',
             ], 404);
         });
 
-        $exceptions->dontReport(DuplicateProductPrice::class);
-
-        $exceptions->render(fn (DuplicateProductPrice $e) => response()->json([
+        // Toda BusinessException (reglas de negocio y ResourceNotFound): cada una trae su código y ShouldntReport las saca del log
+        $exceptions->render(fn (BusinessException $e) => response()->json([
             'message' => $e->getMessage(),
-        ], 409));
+        ], $e->status()));
     })->create();

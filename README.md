@@ -105,7 +105,17 @@ Los *seeders* crean:
 - **Un usuario administrador** para obtener el token de acceso:
   - Correo: `root@example.com`
   - Contraseña: `Abc.123*`
-- **Cinco divisas** tomadas de una lista fija (dólar estadounidense, euro, libra esterlina, yen japonés y dólar canadiense). Se eligen al azar, así que pueden repetirse; consulta los IDs reales en Adminer, en la tabla `currencies`.
+- **Cinco divisas**, cada una una sola vez y siempre con los mismos IDs en una base nueva:
+
+  | ID | Divisa | Símbolo | `exchange_rate` |
+  |---|---|---|---|
+  | 1 | US Dollar (divisa de referencia) | `$` | 1.000000 |
+  | 2 | Euro | `€` | 0.850000 |
+  | 3 | British Pound | `£` | 0.750000 |
+  | 4 | Japanese Yen | `¥` | 110.000000 |
+  | 5 | Canadian Dollar | `$` | 1.250000 |
+
+  Volver a ejecutar el *seeder* no duplica divisas: actualiza las existentes por nombre.
 
 ### 6. Iniciar el servidor
 
@@ -146,7 +156,7 @@ export TOKEN="1|Q8LKPRy1LpQdptWkjbykxosi7nz..."
 
 **2. Crear un producto**
 
-En los ejemplos, la divisa `1` es la divisa base del producto y la `2` es otra divisa distinta. Como el *seeder* elige las divisas al azar, revisa en Adminer qué IDs existen y ajústalos.
+En los ejemplos, el producto se crea en dólares (`currency_id: 1`) y el precio se registra en euros (`currency_id: 2`), según los IDs que deja el *seeder*.
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/products \
@@ -271,7 +281,7 @@ El orden no es casual:
 
 **Verificación incluida.** Cada petición tiene una prueba que comprueba el código de estado esperado (200, 201 o 204). El resultado aparece en la pestaña **Test Results** de la respuesta.
 
-**Datos de ejemplo.** **Create Product** usa `currency_id: 1` como divisa base y **Create Product Prices** usa `currency_id: 3`. Ambas existen después de `php artisan migrate --seed`, que crea cinco divisas. Si el precio responde 422, revisa que la divisa del precio sea distinta de la divisa base del producto.
+**Datos de ejemplo.** **Create Product** usa `currency_id: 1` (US Dollar) como divisa base y **Create Product Prices** usa `currency_id: 3` (British Pound). Ambas existen siempre después de `php artisan migrate --seed`. Si el precio responde 422, revisa que la divisa del precio sea distinta de la divisa base del producto.
 
 ### Postman: ejecutar la colección completa
 
@@ -319,7 +329,7 @@ En Insomnia no hacen falta scripts. Las variables `access_token` y `product_id` 
 
 - Después de **Logout**, el token queda revocado: vuelve a enviar **Login**.
 - Después de **Delete Product**, Show, Update y Prices responden 404 hasta que envíes **Create Product** otra vez.
-- **Create Product** y **Create Product Prices** usan `currency_id` 1 y 3, igual que en Postman.
+- **Create Product** y **Create Product Prices** usan `currency_id` 1 (US Dollar) y 3 (British Pound), igual que en Postman.
 
 ## Endpoints
 
@@ -568,7 +578,9 @@ Errores   ◄── bootstrap/app.php (convierte excepciones en 404 / 409 con JS
 ```
 app/
 ├── Exceptions/
-│   └── DuplicateProductPrice.php      Excepción de negocio: precio duplicado en una divisa
+│   ├── BusinessException.php          Base de las reglas de negocio: código HTTP y fuera del log
+│   ├── DuplicateProductPrice.php      Precio duplicado en una divisa (409)
+│   └── ResourceNotFound.php           Recurso inexistente o eliminado (404)
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Controller.php             Clase base del esqueleto de Laravel
@@ -643,9 +655,9 @@ Al superar el límite se responde **429** con el encabezado `Retry-After`. Desde
 Desde Laravel 11, el manejo de excepciones se configura en este archivo. Se definió:
 
 - **`shouldRenderJsonWhen`**: toda ruta bajo `api/*` responde errores en JSON, aunque el cliente no envíe `Accept: application/json`. Nunca se devuelve una página HTML de error.
-- **404 personalizado**: por defecto Laravel responde `No query results for model [App\Models\Product] 6`, lo que revela el nombre interno de la clase incluso con `APP_DEBUG=false`. Se reemplaza por un mensaje genérico y se distingue entre "el recurso no existe" y "la URL no existe".
-- **409 para `DuplicateProductPrice`**: la excepción de negocio se traduce aquí al código HTTP. Así el servicio no depende de HTTP y todos los mapeos de errores quedan en un solo lugar.
-- **`dontReport(DuplicateProductPrice::class)`**: un precio duplicado es una regla de negocio que funcionó bien, no un fallo. No se escribe en el log de errores, para no ensuciar el monitoreo.
+- **404 de un recurso que no existe**: por defecto Laravel responde `No query results for model [App\Models\Product] 6`, lo que revela el nombre interno de la clase incluso con `APP_DEBUG=false`. Con `$exceptions->map()`, el `ModelNotFoundException` se convierte en `ResourceNotFound` (una `BusinessException` con código 404) **antes** de que Laravel lo transforme en un 404 genérico, y se responde con el mismo `render()` que las reglas de negocio.
+- **404 de una URL que no existe**: un `render()` para `NotFoundHttpException` atiende solo las rutas inexistentes, con su propio mensaje. Así el cliente distingue "el recurso no existe" de "la URL está mal escrita".
+- **Un solo `render()` para todas las reglas de negocio**: cualquier excepción que extienda `BusinessException` se responde como `{"message": ...}` con el código que trae la propia excepción (`$e->status()`). Agregar una regla nueva no requiere tocar este archivo, y el formato de error es siempre el mismo.
 
 ### Controllers — `app/Http/Controllers`
 
@@ -690,9 +702,37 @@ El servicio concentra la lógica de negocio de productos y precios, separada de 
 
 **Por qué el servicio es `final` y no tiene interfaz:** existe una sola implementación. Laravel inyecta la clase concreta sin configuración, y crear una interfaz para una única implementación agrega código sin aportar nada. Si en el futuro hubiera una segunda implementación, ese sería el momento de introducirla.
 
-### Excepciones de negocio — `app/Exceptions/DuplicateProductPrice.php`
+### Excepciones de negocio — `app/Exceptions`
 
-Representa la regla "un producto no puede tener dos precios en la misma divisa". Extiende de `RuntimeException`, trae su mensaje por defecto y **no sabe nada de HTTP**. El código 409 se asigna en `bootstrap/app.php`.
+Las reglas de negocio que el servicio hace cumplir se expresan como excepciones que extienden **`BusinessException`**:
+
+| Clase | Qué aporta |
+|---|---|
+| `BusinessException` (abstracta) | Extiende `RuntimeException` e implementa `ShouldntReport`, la interfaz de Laravel que marca "esto no es un error para el log". Define `$status` (422 por defecto) y el método `status()` |
+| `DuplicateProductPrice` | La regla "un producto no puede tener dos precios en la misma divisa". Solo declara su mensaje y `$status = 409` |
+| `ResourceNotFound` | El recurso pedido no existe o fue eliminado (`$status = 404`). No la lanza el servicio: `bootstrap/app.php` la crea con `map()` a partir del `ModelNotFoundException` que produce el *route model binding* |
+
+Así se reparten las responsabilidades:
+
+- **El servicio** lanza la excepción (`throw new DuplicateProductPrice`) sin saber cómo se responde.
+- **La excepción** dice qué regla se rompió y qué tan grave es (su código).
+- **`bootstrap/app.php`** tiene un único `render()` que convierte cualquier `BusinessException` en JSON.
+- **`ShouldntReport`** evita que estas excepciones lleguen al log de errores: son reglas que funcionaron bien, no fallos, y registrarlas ensuciaría el monitoreo.
+
+Agregar una regla nueva es crear una sola clase, sin tocar la configuración:
+
+```php
+final class CurrencyInUse extends BusinessException
+{
+    protected int $status = 409;
+
+    protected $message = 'The currency is used by products or prices.';
+}
+```
+
+"No encontrado" no es estrictamente una regla de negocio, pero pasa por la misma base para que todo error con formato propio se resuelva en un solo mecanismo y con la misma forma de respuesta.
+
+El resto de las excepciones de Laravel (`ValidationException`, `AuthenticationException`, `ThrottleRequestsException`) no pasan por esta base: Laravel ya les da su respuesta nativa (422, 401 y 429).
 
 ### Resources — `app/Http/Resources`
 
@@ -750,7 +790,7 @@ Las reglas de integridad se aplican **en la base de datos**, no solo en la aplic
 ### Factories y Seeders — `database/factories`, `database/seeders`
 
 - **Factories** (`ProductFactory`, `ProductPriceFactory`, `CurrencyFactory`, `UserFactory`): generan datos de prueba. Cada una crea automáticamente sus dependencias; por ejemplo, `ProductPriceFactory` crea su producto y su divisa si no se le pasan. Así cada prueba arma sus propios datos en una línea.
-- **Seeders**: `UserSeeder` crea el usuario `root@example.com` y `CurrencySeeder` crea cinco divisas. `DatabaseSeeder` los ejecuta en orden.
+- **Seeders**: `UserSeeder` crea el usuario `root@example.com`. `CurrencySeeder` recorre la lista fija de `CurrencyFactory::CURRENCIES` y crea cada divisa una sola vez con `updateOrCreate`, así que los IDs son predecibles y no hay divisas repetidas. Esto importa porque la regla "no se permite un precio en la divisa base" compara IDs: dos filas "Euro" permitirían saltársela. `DatabaseSeeder` ejecuta ambos en orden.
 
 ### Herramientas incluidas por Laravel
 
@@ -770,12 +810,13 @@ Los controladores se prueban con **pruebas de feature**: hacen peticiones HTTP r
 | Archivo | Pruebas | Qué verifica |
 |---|---|---|
 | `tests/Feature/AuthControllerTest.php` | 7 | Login correcto con token Bearer, un solo token activo por usuario, contraseña incorrecta (401), validación (422), **bloqueo al sexto intento (429)**, logout revoca el token, logout sin token (401) |
-| `tests/Feature/ProductControllerTest.php` | 18 | 401 en los 5 endpoints sin token, paginación y orden, `per_page` inválido, creación con 201 y `Location`, descripción obligatoria (422 sin guardar nada), campos obligatorios, montos y divisa inválidos, detalle con precios, 404, actualización parcial, en la actualización: monto negativo, **más de dos decimales sin redondear**, monto fuera del límite de la columna, monto justo en el límite, divisa inexistente, **divisa base que ya tiene precio (422)** y divisa base libre (200), **soft delete** |
-| `tests/Feature/ProductPriceControllerTest.php` | 7 | 401 sin token, listado con `convertedPrice` correcto, 404 con producto inexistente o eliminado, creación, **409 por divisa duplicada**, 422 por divisa base, validación |
+| `tests/Feature/ProductControllerTest.php` | 19 | 401 en los 5 endpoints sin token, paginación y orden, `per_page` inválido, creación con 201 y `Location`, descripción obligatoria (422 sin guardar nada), campos obligatorios, montos y divisa inválidos, detalle con precios, 404 de producto inexistente y 404 de URL inexistente (mensajes distintos), actualización parcial, en la actualización: monto negativo, **más de dos decimales sin redondear**, monto fuera del límite de la columna, monto justo en el límite, divisa inexistente, **divisa base que ya tiene precio (422)** y divisa base libre (200), **soft delete** |
+| `tests/Feature/ProductPriceControllerTest.php` | 7 | 401 sin token, listado con `convertedPrice` correcto, 404 con producto inexistente o eliminado, creación, **409 por divisa duplicada sin registrarse en el log** (`Exceptions::fake()`), 422 por divisa base, validación |
+| `tests/Feature/CurrencySeederTest.php` | 1 | El *seeder* crea las 5 divisas una sola vez con IDs estables (1 = US Dollar), aunque se ejecute dos veces |
 | `tests/Unit/CurrencyConvertTest.php` | 3 | Conversión con la misma tasa, redondeo del medio centavo hacia arriba (8.585 → 8.59) y conversión entre dos divisas que no son la base |
 | `tests/Feature/ApiDocsTest.php` | 1 | Swagger responde 404 fuera del entorno local |
 
-Total: **36 pruebas**.
+Total: **38 pruebas**.
 
 ## Seguridad
 

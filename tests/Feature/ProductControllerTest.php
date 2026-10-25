@@ -123,6 +123,15 @@ class ProductControllerTest extends TestCase
             ->assertExactJson(['message' => 'The requested resource was not found.']);
     }
 
+    public function test_unknown_url_returns_404_with_route_message(): void
+    {
+        $this->signIn();
+
+        $this->getJson('/api/v1/prodcts')
+            ->assertNotFound()
+            ->assertExactJson(['message' => 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.']);
+    }
+
     public function test_update_changes_only_sent_fields(): void
     {
         $this->signIn();

@@ -10,13 +10,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class CurrencyFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    protected $model = Currency::class;
-
     public const CURRENCIES = [
         ['name' => 'US Dollar', 'symbol' => '$', 'exchange_rate' => 1.00],
         ['name' => 'Euro', 'symbol' => '€', 'exchange_rate' => 0.85],
